@@ -7,6 +7,23 @@ In this exercise, please implement a Deep Neural Network (DNN) model to predict 
 
 #### ANS=
 
+In the design part, I implement Adam Optimizer and SGD optimizer. I select Leaky Relu as my activation function. In Output layer,will do softmax function to compare two neuron which death or survived in the end.
+The model picture shows below.
+
+<p align="left">
+  <img width=100%  src="Question1.png">
+</p>
+
+<p align="left">
+  <img width=50%  src="first_question_train_loss.png">
+  <img width=48%  src="first_question_test_loss.png">
+</p>
+
+<p align="left">
+  <img width=50%  src="first_question_train_error.png">
+  <img width=48%  src="first_question_test_error.png">
+</p>
+which origin means the question 2, and the optimizer be selected on question 2 is SGD.By the way, the test accuracy On the [6,12,24,2] will be 0.837+-0.02. **The learning rate = 0.0028**, **batch size = 8**.The model I will design on [6,12,24,2] is that I think the last layer need to wide to extract more information, so I design by this.Some interesting experiment shows that when I use Adam Optimizer, the converge speed is do fast that I surprised when the picture shows.
 
 #### 2.Please construct a DNN with a specified architecture. The number of units in layers should be arranged as [6 3 3 2], corresponding to those of input layer, first and second hidden layers, and output layer. This network has the same inputs and outputs as provided.
 
@@ -40,7 +57,7 @@ In the validation process, In every 100 epoch, I will evaluate the test error ra
   <img width=48%  src="TEST_ACC_COMPARATION.png">
 </p>
 
-In this Part, I standardize the number on Fare, and re-train the model on the same architecture.Also, we can see that the fare value will little affect the accuracy in the test, and decrease the accuracy from 0.80 -> 0.78
+In this Part, I standardize the number on Fare, and re-train the model on the same architecture.Also, we can see that the fare value will little affect the accuracy in the test, and decrease the accuracy from 0.80 -> 0.78.Some Insight on the picture shows that when we standardize the data, the comverge speed will enhance, but accuracy will not have more difference in the result.
 
 #### 4.Please identify which feature affects the prediction performance the most. Describe the process how you solve this problem in the report.
 
@@ -152,4 +169,13 @@ In the first Case, the results shows  [[0.06185877 0.93814123]]. Survived probab
 <p align="center">
   <img width=100%  src="Selection_067.png">
 </p>
+
+#### Some Issue on Implementation
+
+#### How do we ensure our gradient implementation have any error ?
+#### Ans= 
+I leverage cs231N TA's package**gradient_check.py** to check my gradient is correct.
+In their class note, some summary saying that if your model have some kinks(non-linearity properties function like softmax or tanh or relu) the results lower to 1e-4 is usually okay.
+Some detail can refer to this [cs231n gradient check detail](http://cs231n.github.io/neural-networks-3/#gradcheck).
+
 

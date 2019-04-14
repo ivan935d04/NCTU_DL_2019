@@ -1,3 +1,5 @@
+##this is a model for question 2,3,4,5/(SGD and  Relu)
+
 import numpy as np
 import matplotlib.pyplot as plt
 

@@ -1,5 +1,5 @@
 from prepro import *
-from model import *
+from model_2 import *
 import random
 import matplotlib.pyplot as plt
 from gradient_check import eval_numerical_gradient
@@ -59,11 +59,7 @@ if __name__ == "__main__":
     val_acc = []
     val_acc_t = []
 
-    # train_number = list(range(len(train_data)))
-    # test_number = list(range(len(test_data)))
-    print(len(train_data))
     num_of_batch = int(np.floor(len(train_data) / N))
-    print(num_of_batch)
     num_of_test_batch = int(np.floor(len(test_data) / N))
 
     Check = train_data[0:N]
@@ -71,47 +67,43 @@ if __name__ == "__main__":
     check_f(X,Y,model)
 
     smooth = 0.3
-    lr= 1e-2
     step = 0
     epoch = 1000
     count = 0
-    print("lr: {}".format(lr))
-    # print(len(train_data))
+    best_acc = 0
+    best_lr = 0
+    lr = 0.01
+    model = mod1(N, D, H1, H2)
+    step=0
     for u in range(epoch):
-        # random.shuffle(train_data)
+        random.shuffle(train_data)
+        random.shuffle(test_data)
         for i in range(num_of_batch):
             Train = train_data[i*N:(i+1)*N]
             X, Y=prepro(Train)
+            slr = lr
             if step > 100:
+                pass
                 if step % 1000 ==0:
-                    lr = lr * 0.96
-                    print("lr={}".format(lr))  
-            loss_train, _,_ = model.train(X, Y,lr= lr)
+                    # slr =slr * 0.96
+                    pass
+            _, _,_ = model.train(X, Y,lr= slr)
             
             if (step % 50== 0):
-                train += [loss_train]
                 X_t,Y_t =prepro(train_data)
-                _, acc_train,_ =model.test(X_t,Y_t)
-                # print(model.grad)
-                print("------------------------------------")
+                loss_train, acc_train,_ =model.test(X_t,Y_t)
+                train += [loss_train]
                 train_acc += [1-acc_train]
-                print("step: {} train_loss:{} train_acc:{}".format(step,loss_train,acc_train))
+                
 
             if (step % 500 == 0):
-                for k in range(num_of_test_batch):
-                    Test =test_data[k*N:(k+1)*N]
-                    x_test, y_test = prepro(Test)
-                    loss_test,_,_ = model.test(x_test, y_test)
-                    test_t += [loss_test]
                 X_test,Y_test =prepro(test_data)
-                _,acc_test,test_=model.test(X_test, Y_test)
+                loss_test,acc_test,test_=model.test(X_test, Y_test)
                 test_acc += [1-acc_test]
-                test += [np.mean(test_t)]
-                print("step: {} test_loss:{} test_acc:{}".format(step,np.mean(test_t),acc_test))
-                test_t = []
-                test_acc_t = []
+                test+=[loss_test]
+                print("step: {} test_loss:{} test_acc:{}".format(step,loss_test,acc_test))
             step+=1
-            # if step >1000
+        
     
 
     
@@ -125,37 +117,32 @@ if __name__ == "__main__":
 
     plt.plot(range(0,step,50),train,label="train")
     # plt.scatter(range(0,step,500),test,label="test")
-    # pickle.dump((range(0,step,50),train),open("pclass_more3_train.p",'wb'))
+    # pickle.dump((range(0,step,50),train),open("first_question_train.p",'wb'))
     plt.xlabel("epoch")
-    plt.xticks(list(range(0,100*epoch,10000)),list(range(0,epoch,100)))
+    plt.xticks(list(range(0,100*epoch,50000)),list(range(0,epoch,500)))
     plt.legend(loc="upper left")
     plt.title("training loss")
     plt.show()
 
     plt.plot(range(0,step,500),test,label="test")
-    # pickle.dump((range(0,step,500),test),open("pclass_more3_test.p",'wb'))
+    # pickle.dump((range(0,step,500),test),open("first_question_test.p",'wb'))
     plt.xlabel("epoch")
-    plt.xticks(list(range(0,100*epoch,10000)),list(range(0,epoch,100)))
+    plt.xticks(list(range(0,100*epoch,50000)),list(range(0,epoch,500)))
     plt.legend(loc="upper left")
     # plt.yscale("log")
     plt.title("testing loss")
     plt.show()
 
-
-    # plt.subplot(212)
-    # plt.ylim((0.5,0.85))
-    # plt.yscale("log")
-    # plt.xscale("log")
     plt.plot(range(0,step,50),train_acc,label="train")
-    plt.xticks(list(range(0,100*epoch,10000)),list(range(0,epoch,100)))
+    plt.xticks(list(range(0,100*epoch,50000)),list(range(0,epoch,500)))
     plt.title("training error")
     plt.xlabel("epoch")
     plt.show()
 
     plt.plot(range(0,step,500),test_acc,label="test")
-    plt.xticks(list(range(0,100*epoch,10000)),list(range(0,epoch,100)))
-    # pickle.dump((range(0,step,50),train_acc),open("pclass_more3_acc_train.p",'wb'))
-    # pickle.dump((range(0,step,500),test_acc),open("pclass_more3_acc_test.p",'wb'))
+    plt.xticks(list(range(0,100*epoch,50000)),list(range(0,epoch,500)))
+    # pickle.dump((range(0,step,50),train_acc),open("first_question_acc_train.p",'wb'))
+    # pickle.dump((range(0,step,500),test_acc),open("first_question_acc_test.p",'wb'))
 
     plt.xlabel("epoch")
     # plt.plot(range(0,step,1000),val_acc,label="val");

@@ -13,16 +13,17 @@ class mod1():
 
         self.param = {}
         self.grad = {}
+        np.random.seed(0)
         self._get_param()
 
         return
 
     def _get_param(self, std=1e-1):
-        np.random.seed(0)
+        
         self.param["W1"] = std * np.random.randn(self.D, self.H1)
-        self.param["b1"] = np.zeros(self.H1)
+        self.param["b1"] = np.zeros(self.H1,dtype=np.float64)
         self.param["W2"] = std * np.random.randn(self.H1, self.H2)
-        self.param["b2"] = np.zeros(self.H2)
+        self.param["b2"] = np.zeros(self.H2,dtype=np.float64)
         self.param["W3"] = std * np.random.randn(self.H2, 2)
         self.param["b3"] = np.zeros(2)
         return
@@ -33,21 +34,6 @@ class mod1():
             raise ValueError(
                 "Please check X's dimension is same as W1's shape[0]")
         return
-
-    def _forward(self, X):
-        b, D = X.shape
-        self.layer_1 = X @ self.param["W1"] + self.param["b1"]
-        self.layer_1_o = np.maximum(0, self.layer_1)  #relu
-        self.layer_2 = self.layer_1_o @ self.param["W2"] + self.param["b2"]
-        self.layer_2_o = np.maximum(0, self.layer_2)  #relu
-        self.layer_3 = self.layer_2_o @ self.param["W3"] + self.param["b3"]
-        self.f = self.layer_3-np.max(self.layer_3)
-        self.divider=np.sum(np.exp(self.f),axis=1,keepdims=True)
-        # self.divider[self.divider==0] = 1
-        self.output = np.exp(self.f) / self.divider
-
-        
-        return self.output
 
     def _loss(self, Output, Y):
         if self.reg_mode is None:
@@ -64,6 +50,25 @@ class mod1():
         loss = self.cross_entropy(Output, Y) + reg_term
         self.loss = loss / self.N
         return self.loss
+
+    def _forward(self, X):
+        b, D = X.shape
+        # print("aaaa",self.param["W1"])
+        self.layer_1 = X @ self.param["W1"] + self.param["b1"]
+        # print("bbbb",self.param["W1"])
+        self.layer_1_o = np.maximum(0, self.layer_1)  #relu
+        self.layer_2 = self.layer_1_o @ self.param["W2"] + self.param["b2"]
+        self.layer_2_o = np.maximum(0, self.layer_2)  #relu
+        self.layer_3 = self.layer_2_o @ self.param["W3"] + self.param["b3"]
+        self.f = self.layer_3-np.max(self.layer_3)
+        self.divider=np.sum(np.exp(self.f),axis=1,keepdims=True)
+        # self.divider[self.divider==0] = 1
+        self.output = np.exp(self.f) / self.divider
+        # print("=================")
+
+
+        
+        return self.output
 
     def _backward(self, X, Y):
         dW1 = np.zeros(self.param["W1"].shape)
@@ -92,7 +97,7 @@ class mod1():
         dh3_o = (d_output) @ self.param["W3"].T
 
         dh3 = dh3_o
-        dh3[self.layer_2_o == 0] = 0
+        dh3[self.layer_2 <= 0] = 0
 
         dW2 = self.layer_1_o.T @ dh3
         db2 += np.sum(dh3, axis=0)
@@ -101,7 +106,7 @@ class mod1():
 
         dh2_o = dh3 @ self.param['W2'].T
         dh2 = dh2_o
-        dh2[self.layer_1_o == 0] = 0
+        dh2[self.layer_1 <= 0] = 0
 
         dW1 = X.T @ dh2
         db1 += np.sum(dh2, axis=0)
@@ -142,18 +147,18 @@ class mod1():
 
     def loss_f(self,X,Y):
         b, D = X.shape
-        self.layer_1 = X @ self.param["W1"] + self.param["b1"]
-        self.h1 = np.maximum(0, self.layer_1)  #relu
-        self.layer_2 = self.h1 @ self.param["W2"] + self.param["b2"]
-        self.h2 = np.maximum(0, self.layer_2)  #relu
-        self.layer_3 = self.h2 @ self.param["W3"] + self.param["b3"]
-        self.layer_3 -= np.max(self.layer_3)
-        self.divider=np.sum(np.exp(self.layer_3),axis=1,keepdims=True)
+        layer_1 = X @ self.param["W1"] + self.param["b1"]
+        h1 = np.maximum(0, layer_1)  #relu
+        layer_2 = h1 @ self.param["W2"] + self.param["b2"]
+        h2 = np.maximum(0, layer_2)  #relu
+        layer_3 = h2 @ self.param["W3"] + self.param["b3"]
+        layer_3 -= np.max(layer_3)
+        divider=np.sum(np.exp(layer_3),axis=1,keepdims=True)
         # self.divider[self.divider==0] = 1
-        self.output = np.exp(self.layer_3) / self.divider
+        output = np.exp(layer_3) / divider
 
-        loss = -1 * np.sum(np.log(self.output[Y==1]))
-        self.loss = loss / self.N
+        loss = -1 * np.sum(np.log(output[Y==1]))
+        loss = loss / b
 
         dW1 = np.zeros(self.param["W1"].shape)
         dW2 = np.zeros(self.param["W2"].shape)
@@ -166,28 +171,27 @@ class mod1():
         d_R = np.zeros(Y.shape)
         d_output = np.zeros(Y.shape)
         
-        d_R = self.output
+        d_R +=output
         d_R[Y==1] -=1
-        d_R = d_R / self.N
         
-        dW3 = self.h2.T @ (d_R)
+        dW3 = h2.T @ (d_R)/b
         
-        db3 = np.sum(d_R, axis=0)
+        db3 = np.sum(d_R, axis=0)/b
         # print(db3.shape)
 
         dh2 = (d_R) @ self.param["W3"].T
 
-        dh2[self.h2 <= 0] = 0
+        dh2[h2 <= 0] = 0
 
-        dW2 = self.h1.T @ dh2
+        dW2 = h1.T @ dh2/b
 
-        db2 = np.sum(dh2, axis=0)
+        db2 = np.sum(dh2, axis=0)/b
 
         dh1 = dh2 @ self.param['W2'].T
-        dh1[self.h1 <= 0] = 0
+        dh1[h1 <= 0] = 0
 
-        dW1 = X.T @ dh1
-        db1 = np.sum(dh1, axis=0)
+        dW1 = X.T @ dh1/b
+        db1 = np.sum(dh1, axis=0)/b
 
         reg_term = {}
 
@@ -196,9 +200,9 @@ class mod1():
             reg_term['W2'] = 1
             reg_term["W1"] = 1
         if self.reg_mode == "L2":
-            reg_term["W3"] = np.sum(self.param["W3"])
-            reg_term["W2"] = np.sum(self.param["W2"])
-            reg_term["W1"] = np.sum(self.param["W1"])
+            reg_term["W3"] = self.param["W3"]
+            reg_term["W2"] = self.param["W2"]
+            reg_term["W1"] = self.param["W1"]
         if self.reg_mode is None:
             reg_term["W3"] = 0
             reg_term['W2'] = 0
@@ -211,7 +215,7 @@ class mod1():
         self.grad["W1"] = dW1
         self.grad["b1"] = db1
 
-        return self.loss, self.grad
+        return loss, self.grad
 
     def _info(self):
         print(self.param)
